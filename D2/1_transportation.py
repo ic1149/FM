@@ -56,7 +56,15 @@ while solmat[-1][-1] > 0:
     solmat[-1][current_col] -= change  # satisfy demand
     solmat[-1][-1] -= change  # decrease total
 
-    if solmat[-1][current_col] == 0:
+    if solmat[-1][current_col] == solmat[current_row][-1] == 0\
+        and current_col != len(solmat[0])-1:
+        # prevent degenerate solution
+        # last row zero is fine
+
+        solmat[current_row][current_col+1] = 0
+        current_col += 1
+        current_row += 1
+    elif solmat[-1][current_col] == 0:
         current_col += 1
     else:
         current_row += 1

@@ -1,6 +1,6 @@
 from custom import printmat
 
-# ch1 eg 2
+# ch1 eg 2,6,8,10,11 (same data, multiple stages)
 
 # given
 costmat = [
@@ -14,7 +14,7 @@ total_demand = sum(costmat[-1][:-1])
 total_supply = 0
 for row in costmat[:-1]:
     total_supply += row[-1]
-
+# ***** balancing the supply and demand *****
 if total_demand > total_supply:  # dummy supply
     costmat += [costmat[-1]]
     costmat[-2] = [0]*len(costmat[0])
@@ -25,17 +25,21 @@ elif total_supply > total_demand:  # dummy demand
         row[-2] = 0
     print("adding dummy demand")
 else:
-    print("panick adding dummies")
+    print("already balanced, no dummies needed")
 
-print(costmat)
+print("cost mat")
+printmat(costmat)
 
-#solution matrix
+# solution matrix
 solmat = []
 # fill in right column and bottom row from costmat
 for row in costmat[:-1]:
     solmat += [[None]*(len(row)-1) + [row[-1]]]
 
 solmat += [costmat[-1]]
+# ***** Finding initial solution *****
+# solution that uses all the stock 
+# and meets all the demands.
 
 # starting on top left
 current_row = 0
@@ -62,7 +66,8 @@ while solmat[-1][-1] > 0:
 print("initial solution")
 printmat(solmat)
 
-def cal_total_cost(costmat,solmat):
+
+def cal_total_cost(costmat, solmat):
     total = 0
 
     for i in range(len(solmat)-1):
@@ -72,24 +77,13 @@ def cal_total_cost(costmat,solmat):
 
     return total
 
-print("total cost: ", cal_total_cost(costmat,solmat))
 
-# ch1 eg 3
-# unbalanced
+print("total cost: ", cal_total_cost(costmat, solmat))
 
-# supply > demand
-# add dummy demand
-
-# m: num of rows
-# n: num of cols
-# degenerate: num of cells used (in feasible solution) < n+m-1
-
-# if diagonal move, add zero
-# (either way, horizontal or vertical are fine)
-
+# ***** Finding an improved solution *****
 has_impr = True  # assume has improvement
 while has_impr:
-
+    # *** finding shadow costs ***
     shadowmat = [[None]*len(solmat[0])]
 
     for i in range(len(solmat)-1):
@@ -115,7 +109,7 @@ while has_impr:
                 printmat(shadowmat)
                 top_shadow = shadowmat[0][j]  # dest
                 left_shadow = shadowmat[i][0]  # source
-                print("top,left",top_shadow,left_shadow)
+                print("top,left", top_shadow, left_shadow)
                 if top_shadow is not None and left_shadow is None:
                     shadowmat[i][0] = shadowmat[i][j] - top_shadow
                     new_shadow = True
@@ -123,12 +117,13 @@ while has_impr:
                     shadowmat[0][j] = shadowmat[i][j] - left_shadow
                     new_shadow = True
                 else:
-                    print("panick finding shadow costs")
-                
+                    print("shadow costs found previously or "\
+                          "panick finding shadow costs")
 
     print("shadow costs calculated")
     printmat(shadowmat)
 
+    # *** finding imrovement indices ***
     imprmat = shadowmat  # improvement
     has_impr = False  # bool check if exists negative improvements
     for i in range(1, len(imprmat)):
@@ -147,20 +142,21 @@ while has_impr:
     printmat(imprmat)
 
     # use the cell with the most negative improvement index
-    # put theta, neighboring cells -t, diagonal that way +t 
+    # put theta, neighboring cells -t, diagonal that way +t
     # if all positive, optimal
 
+    # *** stepping stone method ***
     if has_impr:
         minval = 0
-        mincell = [0,0]
+        mincell = [0, 0]
 
         for i in range(1, len(imprmat)):
             for j in range(1, len(imprmat[0])):
-                if imprmat [i][j] is None:
+                if imprmat[i][j] is None:
                     continue
                 elif imprmat[i][j] < minval:
                     minval = imprmat[i][j]
-                    mincell = [i-1,j-1]
+                    mincell = [i-1, j-1]
 
         print("min cell [row, col]", mincell, "with value", minval)
 
@@ -176,11 +172,10 @@ while has_impr:
         else:
             move[1] = -1
 
-        
         # minimise one cell to zero, everything has to be non negative
-        
+
         if solmat[mincell[0]][mincell[1]+move[1]] < \
-            solmat[mincell[0]+move[0]][mincell[1]]:
+                solmat[mincell[0]+move[0]][mincell[1]]:
 
             theta = solmat[mincell[0]][mincell[1]+move[1]]
 
@@ -188,7 +183,7 @@ while has_impr:
             solmat[mincell[0]][mincell[1]+move[1]] = None  # not used
 
         elif solmat[mincell[0]][mincell[1]+move[1]] > \
-            solmat[mincell[0]+move[0]][mincell[1]]:
+                solmat[mincell[0]+move[0]][mincell[1]]:
 
             theta = solmat[mincell[0]+move[0]][mincell[1]]
 
@@ -207,15 +202,16 @@ while has_impr:
 
         solmat[mincell[0]][mincell[1]] = theta  # enterring cell
 
-
         print("improved solution")
-        print("total cost: ", cal_total_cost(costmat,solmat))
+        print("total cost: ", cal_total_cost(costmat, solmat))
         printmat(solmat)
 
 print("optimal solution")
-print("total cost:", cal_total_cost(costmat,solmat))
+print("total cost:", cal_total_cost(costmat, solmat))
 
 # strip demand and supply row and col
+# as they are not needed for output
+
 solmat = solmat[:-1]
 for i in range(len(solmat)):
     solmat[i] = solmat[i][:-1]
